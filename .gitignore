@@ -1,0 +1,17 @@
+# Entorno Virtual
+venv_PP_IIB_SIS/
+
+# Datos (NUNCA SUBIR)
+data/
+*.csv
+*.zip
+
+# Secretos y Configuración
+.secrets/
+.env
+*.toml
+
+# Logs y Temporales
+logs/
+__pycache__/
+.DS_Store
