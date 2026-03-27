@@ -1,36 +1,18 @@
 from pathlib import Path
 import pandas as pd
 import sys
-import dotenv
 from sqlalchemy import create_engine, text
-import os
-import urllib.parse
 from datetime import datetime
-# from pyspark.sql import SparkSession
-
-#    datos para la conexion mediante psycopg2, pero se usara sqlalchemy para la carga de datos a postgres
 
 #importando coneccion db
-ruta_env = Path(__file__).resolve().parent.parent / ".secrets" / ".env"
-dotenv.load_dotenv(dotenv_path=ruta_env)
+ruta_env = Path(__file__).resolve().parent.parent / ".secrets"
 
-user = os.getenv("DB_USER")
-password = urllib.parse.quote_plus(os.getenv("DB_PASSWORD"))
-host = os.getenv("DB_HOST")
-port = os.getenv("DB_PORT")
-db = os.getenv("DB_NAME")
-# url_secrets = (url_base / "../.secrets").resolve()
-# agregando el path a sys.path para importar el módulo de conexión
-""" sys.path.append(str(url_secrets))
-from db_connection import get_db_connection """
-db_url = f"postgresql://{user}:{password}@{host}:{port}/{db}"
-engine = create_engine(db_url)
+raiz = Path(__file__).resolve().parent.parent / ".secrets"
+sys.path.append(str(raiz))
 
+from db_connection import get_engine
 
-# password = os.getenv("DB_PASSWORD")
-# password_scape = urllib.parse.quote_plus(password)
-
-# db_url = f"postgresql://postgres.qhrueithzijzmysinidk:{password_scape}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+engine = get_engine()
 
 # ruta data
 ruta_csv = Path(__file__).resolve().parent.parent / "data" / "processed" / "cajamarca_raw.csv"
@@ -43,6 +25,8 @@ df['fuente_archivo'] = str(ruta_csv.name)
 
 try:
     with engine.connect() as conn:
+
+        
         # Esto confirma que el "túnel" a la base de datos está abierto
         print("✅ Conexión a la base de datos exitosa (vía SQLAlchemy Engine).")
         # print(f"⏳ Iniciando carga de {len(df)} filas...")

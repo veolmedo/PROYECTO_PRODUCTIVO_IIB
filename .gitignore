@@ -18,3 +18,5 @@ __pycache__/
 .DS_Store
 
 # archivos para pruebas
+tests/
+tests/test_connection.py
