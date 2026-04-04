@@ -1,11 +1,10 @@
 from pathlib import Path
 import pandas as pd
 import sys
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from datetime import datetime
 
 #importando coneccion db
-ruta_env = Path(__file__).resolve().parent.parent / ".secrets"
 
 raiz = Path(__file__).resolve().parent.parent / ".secrets"
 sys.path.append(str(raiz))
