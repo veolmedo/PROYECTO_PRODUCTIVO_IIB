@@ -8,7 +8,11 @@ import pandas as pd
 raiz = Path(__file__).resolve().parent.parent
 sys.path.append(str(raiz))
 
-from utils.logger import registrar_log, inicio_extraccion_log, fin_extraccion_log
+from utils.logger import inicio_extraccion_log, fin_extraccion_log
+from utils.contexto_usuario import parse_args
+
+args = parse_args()
+usurio = args.usuario
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -22,14 +26,6 @@ OUTPUT_DIR = Path(config["paths"]["processed_data"])
 
 
 def filtrar_por_anio(anio):
-
-    log_id = inicio_extraccion_log(
-        proceso=f"FILTRADO_CAJAMARCA_{anio}",
-        estado="INICIO",
-        archivo_origen=f"atenciones_{anio}.csv",
-        usuario="sistema",
-        fecha_inicio=pd.Timestamp.now(),
-    )
 
     logger.info(f"Iniciando filtrado para el año {anio}...")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -68,13 +64,6 @@ def filtrar_por_anio(anio):
                 encoding="utf-8",
             )
 
-    """ registrar_log(
-        "FILTRADO_CAJAMARCA",
-        "EXITO",
-        f"Año {anio}: {total_records} registros guardados en {output_file}",
-    )
-    logger.info(f"Procesado año {anio} con éxito. Total: {total_records}") """
-
     fin_extraccion_log(
         log_id=log_id,
         estado="EXITO",
@@ -85,13 +74,29 @@ def filtrar_por_anio(anio):
 
 
 if __name__ == "__main__":
+
     print("Selecciona los años a procesar (ejemplo: 2017,2018):")
     seleccion = input("> ")
     anios = [a.strip() for a in seleccion.split(",") if a.strip()]
 
     for anio in anios:
+
+        log_id = inicio_extraccion_log(
+        proceso=f"FILTRADO_CAJAMARCA_{anio}",
+        estado="INICIO",
+        archivo_origen=f"atenciones_{anio}.csv",
+        usuario=usurio,
+        fecha_inicio=pd.Timestamp.now(),
+        )
+
         try:
             filtrar_por_anio(anio)
         except Exception as e:
-            registrar_log("FILTRADO_CAJAMARCA", "ERROR", str(e))
+            fin_extraccion_log(
+                log_id=log_id,
+                estado="ERROR",
+                fecha_fin=pd.Timestamp.now(),
+                registros_procesados=0,
+                detalles=f"Error al filtrar los datos {anio}"
+            )
             logger.error(f"Fallo en año {anio}: {e}")

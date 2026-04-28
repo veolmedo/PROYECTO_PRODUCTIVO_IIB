@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import sys
 import logging
+import argparse
 from sqlalchemy import text
 from datetime import datetime
 
@@ -13,11 +14,13 @@ sys.path.append(str(secrets_dir))
 
 from db_connection import get_engine
 from utils.logger import iniciar_proceso, finalizar_proceso
+from utils.contexto_usuario import parse_args
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 engine = get_engine()
+
 
 def get_db_size_mb():
     with engine.connect() as conn:
@@ -40,7 +43,8 @@ for i, f in enumerate(archivos):
 seleccion = input("\nSeleccione archivos (ej: 1,2,3 o 'all'): ")
 archivos_seleccionados = archivos if seleccion.lower() == 'all' else [archivos[int(i.strip())-1] for i in seleccion.split(',')]
 
-usuario = input("Ingrese su usuario (o presione Enter para 12513514@continental.edu.pe): ") or "12513514@continental.edu.pe"
+args = parse_args()
+usuario = args.usuario
 
 for ruta_csv in archivos_seleccionados:
     current_size = get_db_size_mb()
@@ -67,6 +71,7 @@ for ruta_csv in archivos_seleccionados:
                 index=False,
                 chunksize=500
             )
+            conn.execute(text("ALTER TABLE bronze.atenciones_sis_raw ADD COLUMN id_bronze SERIAL PRIMARY KEY;"))
             conn.commit()
             
         finalizar_proceso(log_id, 'completado', registros_procesados=len(df), detalles=f"Cargados {len(df)} registros desde {ruta_csv.name}")
