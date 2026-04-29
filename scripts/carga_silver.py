@@ -1,7 +1,6 @@
 from pathlib import Path
 import sys
 import logging
-import argparse
 from sqlalchemy import text
 
 # Configurar rutas para imports
@@ -13,6 +12,7 @@ sys.path.append(str(secrets_dir))
 from db_connection import get_engine
 from utils.logger import iniciar_proceso, finalizar_proceso
 from utils.contexto_usuario import parse_args
+from utils.filtro_carga import verificar_estado_proceso
 # Configurar logging local
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,6 +24,9 @@ def ejecutar_carga_silver(usuario):
     """
     engine = get_engine()
     
+    if verificar_estado_proceso('carga_silver'):
+        return
+
     print("\n" + "="*50)
     print("Iniciando transformación: Bronze -> Silver")
     print("="*50)
@@ -39,7 +42,7 @@ def ejecutar_carga_silver(usuario):
             result = conn.execute(text("SELECT silver.sp_transform_bronze_to_silver();"))
             conn.commit()
             print(result)
-        finalizar_proceso(log_id, 'completado', detalles="Transformación Bronze a Silver ejecutada exitosamente.")
+        finalizar_proceso(log_id, 'EXITO', detalles="Transformación Bronze a Silver ejecutada exitosamente.")
         print("\n🚀 ¡Transformación a Silver completada con éxito!")
         
     except Exception as e:

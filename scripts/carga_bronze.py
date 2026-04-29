@@ -15,6 +15,7 @@ sys.path.append(str(secrets_dir))
 from db_connection import get_engine
 from utils.logger import iniciar_proceso, finalizar_proceso
 from utils.contexto_usuario import parse_args
+from utils.filtro_carga import verificar_estado_proceso
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,6 +48,9 @@ args = parse_args()
 usuario = args.usuario
 
 for ruta_csv in archivos_seleccionados:
+    if verificar_estado_proceso('carga_bronze', ruta_csv.name):
+        continue
+        
     current_size = get_db_size_mb()
     if current_size > 400: # Límite de seguridad 400MB
         logger.error(f"¡PELIGRO! Base de datos casi llena: {current_size}MB. Abortando.")
@@ -74,7 +78,7 @@ for ruta_csv in archivos_seleccionados:
             conn.execute(text("ALTER TABLE bronze.atenciones_sis_raw ADD COLUMN id_bronze SERIAL PRIMARY KEY;"))
             conn.commit()
             
-        finalizar_proceso(log_id, 'completado', registros_procesados=len(df), detalles=f"Cargados {len(df)} registros desde {ruta_csv.name}")
+        finalizar_proceso(log_id, 'EXITO', registros_procesados=len(df), detalles=f"Cargados {len(df)} registros desde {ruta_csv.name}")
         print(f"🚀 ¡Carga de {ruta_csv.name} completada!")
         
     except Exception as e:

@@ -10,9 +10,10 @@ sys.path.append(str(raiz))
 
 from utils.logger import inicio_extraccion_log, fin_extraccion_log
 from utils.contexto_usuario import parse_args
+from utils.filtro_carga import verificar_estado_proceso
 
 args = parse_args()
-usurio = args.usuario
+usuario = args.usuario
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -80,12 +81,14 @@ if __name__ == "__main__":
     anios = [a.strip() for a in seleccion.split(",") if a.strip()]
 
     for anio in anios:
+        if verificar_estado_proceso(f"FILTRADO_CAJAMARCA_{anio}", f"atenciones_{anio}.csv"):
+            continue
 
         log_id = inicio_extraccion_log(
         proceso=f"FILTRADO_CAJAMARCA_{anio}",
         estado="INICIO",
         archivo_origen=f"atenciones_{anio}.csv",
-        usuario=usurio,
+        usuario=usuario,
         fecha_inicio=pd.Timestamp.now(),
         )
 
