@@ -1,29 +1,38 @@
 import sys
-import subprocess
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(SCRIPT_DIR))
+RAIZ = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = RAIZ / "scripts"
+sys.path.insert(0, str(RAIZ))
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from utils.contexto_usuario import obtener_usuario
+from extraer_cajamarca import ejecutar_extraccion
+from carga_bronze import ejecutar_carga_bronze
+from carga_silver import ejecutar_carga_silver
+from carga_gold import ejecutar_carga_gold
+from limpiar_tablas import limpiar_tablas
 
+def run_pipeline(usuario: str) -> None:
+    anios = ejecutar_extraccion(usuario)
+    if not anios:
+        print("No hay años para procesar en las capas siguientes.")
+        return
 
-def run_script(script_name, usuario):
-    script_path = SCRIPT_DIR / "scripts" / script_name
-    result = subprocess.run([sys.executable, str(script_path), "--usuario", usuario])
-    if result.returncode != 0:
-        raise RuntimeError(f"Fallo la ejecución de {script_name}")
+    for anio in anios:
+        print(f"\n--- Pipeline año {anio} ---")
+        ejecutar_carga_bronze(anio, usuario)
+        ejecutar_carga_silver(anio, usuario)
+        ejecutar_carga_gold(anio, usuario)
+        limpiar_tablas()
+
+    print("\nPipeline completado.")
+
 
 if __name__ == "__main__":
     try:
         usuario = obtener_usuario()
-        print("Iniciando extracción de CAJAMARCA...")
-        run_script("extraer_cajamarca.py", usuario)
-        print("Extracción finalizada. Iniciando carga Bronze...")
-        run_script("carga_bronze.py", usuario)
-        print("carga a bronze finalizada")
-        run_script("carga_silver.py", usuario)
-        print("Pipeline completado.")
+        run_pipeline(usuario)
     except Exception as e:
         print(f"Error en orquestador: {e}")
         sys.exit(1)
